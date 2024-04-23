@@ -292,10 +292,10 @@
                         :duration="`${y.duration / y.content.length}ms`"
                         :style="{
                           '--floating-duration': `${
-                            y.duration <= 1300 ? 1500 : y.duration * 0.8
+                            y.duration <= 1300 ? 5000 : y.duration * 0.8
                           }ms`,
                           '--shadow-duration': `${
-                            y.duration <= 1300 ? 1500 : y.duration * 2
+                            y.duration <= 1300 ? 5000 : y.duration * 2
                           }ms`,
                           '--animation-duration': `${
                             y.duration / y.content.length
@@ -881,15 +881,15 @@ export default {
   0% {
     transform: translateY(0) scale(1);
   }
-  // 25% {
-  //   transform: translateY(-1.7px) scale(1.007);
-  // }
+  15% {
+    transform: translateY(-1.8px) scale(1.027);
+  }
   50% {
     transform: translateY(-2px) scale(1.03);
   }
-  // 75% {
-  //   transform: translateY(-1.7px) scale(1.007);
-  // }
+  85% {
+    transform: translateY(-1.8px) scale(1.027);
+  }
   100% {
     transform: translateY(0) scale(1);
   }
