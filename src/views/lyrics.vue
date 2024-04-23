@@ -241,14 +241,100 @@
               :id="`line${index}`"
               :key="index"
               class="line"
+              :duration="`${
+                line.time - lyricToShow[Math.max(0, index - 1)].time
+              }s`"
+              :start="`${line.time}`"
+              :style="{
+                animation: `highlighting ${
+                  line.time - lyricToShow[Math.max(0, index - 1)].time
+                }s linear`,
+              }"
               :class="{
                 highlight: highlightLyricIndex === index,
               }"
               @click="clickLyricLine(line.time)"
               @dblclick="clickLyricLine(line.time, true)"
             >
-              <div class="content">
-                <span v-if="line.contents[0]">{{ line.contents[0] }}</span>
+              <div
+                :ref="`lyricLineSpan-${index}`"
+                v-intersect="{
+                  true: ['filterBlur'],
+                  false: ['noblur'],
+                }"
+                class="content"
+                :style="{
+                  '--blur-px': `${
+                    Math.abs(index - highlightLyricIndex) > 5
+                      ? 5
+                      : Math.abs(index - highlightLyricIndex)
+                  }px`,
+                }"
+              >
+                <span v-if="line.contents[0]">
+                  <font
+                    v-for="(y, ind) in parseOneLine(yrcToShow[index])"
+                    :key="ind"
+                    :start="`${y.time}`"
+                    :duration="`${y.duration}ms`"
+                    :style="{
+                      display: 'inline-block',
+                      'white-space': 'pre',
+                    }"
+                  >
+                    <font v-if="highlightLyricIndex === index">
+                      <font
+                        v-for="(c, i) in y.content"
+                        :key="i"
+                        :start="`${
+                          y.time + (i * y.duration) / y.content.length
+                        }`"
+                        :duration="`${y.duration / y.content.length}ms`"
+                        :style="{
+                          '--floating-duration': `${
+                            y.duration <= 1300 ? 1500 : y.duration * 0.8
+                          }ms`,
+                          '--shadow-duration': `${
+                            y.duration <= 1300 ? 1500 : y.duration * 2
+                          }ms`,
+                          '--animation-duration': `${
+                            y.duration / y.content.length
+                          }ms`,
+                          display: c === ' ' ? 'initial' : 'inline-block',
+                          '--shining-duration': `${y.duration - 50}ms`,
+                          '--animation-shadow-offset':
+                            y.duration > 1300 ? '0px' : '2px',
+                          '--animation-shadow-blur':
+                            y.duration > 1300 ? '45px' : '3px',
+                          '--animation-color':
+                            y.duration > 1300
+                              ? 'rgba(256, 256, 256, 1)'
+                              : getColor(c),
+                        }"
+                        :class="{
+                          slideShine:
+                            highlightLyricIndex === index &&
+                            playerTime * 1000 >=
+                              y.time + (i * y.duration) / y.content.length,
+                          unhighlightWord:
+                            highlightLyricIndex === index &&
+                            playerTime * 1000 <
+                              y.time + (i * y.duration) / y.content.length,
+                        }"
+                        >{{ c }}</font
+                      >
+                    </font>
+                    <font
+                      v-else
+                      :style="{
+                        display: 'inline-block',
+                        'white-space': 'pre',
+                      }"
+                    >
+                      <font v-for="(c, i) in y.content" :key="i">{{ c }}</font>
+                    </font>
+                  </font>
+                </span>
                 <br />
                 <span
                   v-if="
@@ -279,14 +365,18 @@
 import { mapState, mapMutations, mapActions } from 'vuex';
 import VueSlider from 'vue-slider-component';
 import { formatTrackTime } from '@/utils/common';
-import { getLyric } from '@/api/track';
-import { lyricParser } from '@/utils/lyrics';
+import { getLyric, getLyricByWord } from '@/api/track';
+import { lyricParser, lyricByWordParser } from '@/utils/lyrics';
 import ButtonIcon from '@/components/ButtonIcon.vue';
 import * as Vibrant from 'node-vibrant/dist/vibrant.worker.min.js';
 import Color from 'color';
 import { isAccountLoggedIn } from '@/utils/auth';
 import { hasListSource, getListSourcePath } from '@/utils/playList';
 import locale from '@/locale';
+import Vue from 'vue';
+import VueIntersect from 'vue-intersect-directive';
+
+Vue.use(VueIntersect);
 
 export default {
   name: 'Lyrics',
@@ -300,11 +390,14 @@ export default {
       lyric: [],
       tlyric: [],
       romalyric: [],
+      yrc: [],
       lyricType: 'translation', // or 'romaPronunciation'
       highlightLyricIndex: -1,
+      playerTime: 0,
       minimize: true,
       background: '',
       date: this.formatTime(new Date()),
+      intersected: {},
     };
   },
   computed: {
@@ -333,6 +426,9 @@ export default {
       return this.lyricType === 'translation'
         ? this.lyricWithTranslation
         : this.lyricWithRomaPronunciation;
+    },
+    yrcToShow() {
+      return this.yrc;
     },
     lyricWithTranslation() {
       let ret = [];
@@ -418,7 +514,8 @@ export default {
   },
   watch: {
     currentTrack() {
-      this.getLyric();
+      // this.getLyric();
+      this.getLyricByWord();
       this.getCoverColor();
     },
     showLyrics(show) {
@@ -432,7 +529,8 @@ export default {
     },
   },
   created() {
-    this.getLyric();
+    // this.getLyric();
+    this.getLyricByWord();
     this.getCoverColor();
     this.initDate();
   },
@@ -465,6 +563,48 @@ export default {
         ':' +
         second.padStart(2, '0')
       );
+    },
+    getColor(content) {
+      const COLORS = {
+        yellow: 'rgba(255, 255, 0, 0.75)',
+        green: 'rgba(0, 255, 0, 0.75)',
+        blue: 'rgba(0, 0, 255, 0.75)',
+        red: 'rgba(255, 0, 0, 0.75)',
+        purple: 'rgba(128, 0, 128, 0.75)',
+        orange: 'rgba(255, 165, 0, 0.75)',
+        cyan: 'rgba(0, 255, 255, 0.75)',
+        magenta: 'rgba(255, 0, 255, 0.75)',
+        lime: 'rgba(0, 255, 0, 0.75)',
+        pink: 'rgba(255, 192, 203, 0.75)',
+        gold: 'rgba(255, 215, 0, 0.75)',
+      };
+      for (let key in COLORS) {
+        if (content.toLowerCase().includes(key.toLowerCase())) {
+          return COLORS[key];
+        }
+      }
+      // 如果系统配色为暗色，则返回白色
+      const isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)'); // 是深色
+      if (isDarkTheme.matches) {
+        return 'rgba(225, 225, 225, 0.25)';
+      }
+      return 'rgba(0, 0, 0, 0.75)';
+    },
+    parseOneLine(line) {
+      // "[12270,3420](12270,180,0)I (12450,360,0)took (12810,180,0)an (12990,330,0)arrow (13320,270,0)to (13590,150,0)the (13740,960,0)heart(14700,990,0) "
+      let result = [];
+      let reg = /\((\d+),(\d+),(\d+)\)([^()]+)/g;
+      let match;
+      while ((match = reg.exec(line))) {
+        let [, time, duration, type, content] = match;
+        result.push({
+          time: parseInt(time),
+          duration: parseInt(duration),
+          type: parseInt(type),
+          content,
+        });
+      }
+      return result;
     },
     addToPlaylist() {
       if (!isAccountLoggedIn()) {
@@ -542,6 +682,61 @@ export default {
         }
       });
     },
+    getLyricByWord() {
+      if (!this.currentTrack.id) return;
+      return getLyricByWord(this.currentTrack.id).then(data => {
+        if (!data?.lrc?.lyric) {
+          this.lyric = [];
+          this.tlyric = [];
+          this.romalyric = [];
+          this.yrc = [];
+          return false;
+        } else {
+          let { lyric, tlyric, romalyric, yrc } = lyricByWordParser(data);
+          // console.log(yrc);
+          // console.log(lyric);
+          // const player = new LyricPlayer(); // 创建歌词播放组件
+          // document.getElementById('amll').appendChild(player.getElement()); // 将组件的元素添加到页面
+          // player.setLyricLines(yrc); // 设置歌词
+          // player.setCurrentTime(0); // 设定当前播放时间（需要逐帧调用）
+          // player.update(0); // 更新歌词组件动画（需要逐帧调用）
+          lyric = lyric.filter(
+            l => !/^作(词|曲)\s*(:|：)\s*无$/.exec(l.content)
+          );
+          let includeAM =
+            lyric.length <= 10 &&
+            lyric.map(l => l.content).includes('纯音乐，请欣赏');
+          if (includeAM) {
+            let reg = /^作(词|曲)\s*(:|：)\s*/;
+            let author = this.currentTrack?.ar[0]?.name;
+            lyric = lyric.filter(l => {
+              let regExpArr = l.content.match(reg);
+              return (
+                !regExpArr || l.content.replace(regExpArr[0], '') !== author
+              );
+            });
+          }
+          if (lyric.length === 1 && includeAM) {
+            this.lyric = [];
+            this.tlyric = [];
+            this.romalyric = [];
+            return false;
+          } else {
+            this.lyric = lyric;
+            this.tlyric = tlyric;
+            this.romalyric = romalyric;
+            this.yrc = yrc;
+            if (tlyric.length * romalyric.length > 0) {
+              this.lyricType = 'translation';
+            } else {
+              this.lyricType =
+                lyric.length > 0 ? 'translation' : 'romaPronunciation';
+            }
+            return true;
+          }
+        }
+      });
+    },
     switchLyricType() {
       this.lyricType =
         this.lyricType === 'translation' ? 'romaPronunciation' : 'translation';
@@ -567,6 +762,7 @@ export default {
     setLyricsInterval() {
       this.lyricsInterval = setInterval(() => {
         const progress = this.player.seek(null, false) ?? 0;
+        this.playerTime = progress;
         let oldHighlightLyricIndex = this.highlightLyricIndex;
         this.highlightLyricIndex = this.lyric.findIndex((l, index) => {
           const nextLyric = this.lyric[index + 1];
@@ -576,11 +772,65 @@ export default {
         });
         if (oldHighlightLyricIndex !== this.highlightLyricIndex) {
           const el = document.getElementById(`line${this.highlightLyricIndex}`);
-          if (el)
-            el.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center',
-            });
+          if (el) {
+            // console.log(el);
+            const scrollParent = getScrollParent(el);
+            // console.log(scrollParent);
+            if (scrollParent) {
+              const parentRect = scrollParent.getBoundingClientRect();
+              const elRect = el.getBoundingClientRect();
+              const scrollOffset =
+                elRect.top -
+                parentRect.top -
+                (parentRect.height - elRect.height) / 2;
+              const scrollDuration = 500;
+              const scrollStart = scrollParent.scrollTop;
+              const scrollEnd = scrollStart + scrollOffset;
+              const startTime = performance.now();
+
+              // 缓动函数
+              // eslint-disable-next-line no-inner-declarations
+              function easeOutQuad(t) {
+                return t * (2 - t);
+              }
+
+              // eslint-disable-next-line no-inner-declarations
+              function scrollStep(timestamp) {
+                const currentTime = timestamp - startTime;
+                let scrollProgress = Math.min(currentTime / scrollDuration, 1);
+                // 应用缓动函数
+                scrollProgress = easeOutQuad(scrollProgress);
+                const scrollPosition =
+                  scrollStart + (scrollEnd - scrollStart) * scrollProgress;
+                scrollParent.scrollTop = scrollPosition;
+
+                if (currentTime < scrollDuration) {
+                  window.requestAnimationFrame(scrollStep);
+                }
+              }
+
+              window.requestAnimationFrame(scrollStep);
+            }
+          }
+
+          // eslint-disable-next-line no-inner-declarations
+          function getScrollParent(element) {
+            let parent = element.parentNode;
+            while (parent) {
+              if (
+                parent === document.body ||
+                parent === document.documentElement
+              ) {
+                return window;
+              }
+              const overflowY = getComputedStyle(parent).overflowY;
+              if (overflowY === 'auto' || overflowY === 'scroll') {
+                return parent;
+              }
+              parent = parent.parentNode;
+            }
+            return null;
+          }
         }
       }, 50);
     },
@@ -619,6 +869,104 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.filterBlur {
+  filter: blur(var(--blur-px, 0px));
+}
+
+.noblur {
+  filter: none;
+}
+
+@keyframes floatingAnimation {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  // 25% {
+  //   transform: translateY(-1.7px) scale(1.007);
+  // }
+  50% {
+    transform: translateY(-2px) scale(1.03);
+  }
+  // 75% {
+  //   transform: translateY(-1.7px) scale(1.007);
+  // }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes scaleAnimation {
+  0% {
+    font-size: 1em;
+  }
+  50% {
+    font-size: 1em;
+  }
+  100% {
+    font-size: 1em;
+  }
+}
+
+@keyframes shadowAnimation {
+  0% {
+    text-shadow: 0;
+  }
+  25% {
+    text-shadow: var(--animation-shadow-offset) var(--animation-shadow-offset)
+      var(--animation-shadow-blur) var(--animation-color);
+  }
+  75% {
+    text-shadow: var(--animation-shadow-offset) var(--animation-shadow-offset)
+      var(--animation-shadow-blur) var(--animation-color);
+  }
+  100% {
+    text-shadow: 0;
+  }
+}
+
+.slideShine {
+  background: rgba(0, 0, 0, 0.45) -webkit-linear-gradient(
+      left,
+      rgba(0, 0, 0, 0.88),
+      rgba(0, 0, 0, 0.88)
+    ) 0 0 no-repeat;
+  background-size: 100% 1000px;
+  background-clip: text;
+  -webkit-text-fill-color: rgba(0, 0, 0, 0);
+  animation: slideShineAnimation var(--animation-duration, 0.5s) linear,
+    floatingAnimation var(--floating-duration, 0.5s) ease-in-out,
+    shadowAnimation var(--shadow-duration, 0.5s) linear,
+    scaleAnimation var(--animation-duration, 0.5s) linear;
+  font-weight: 630;
+}
+
+@media (prefers-color-scheme: dark) {
+  .slideShine {
+    background: rgba(255, 255, 255, 0.45) -webkit-linear-gradient(
+        left,
+        rgba(255, 255, 255, 0.88),
+        rgba(255, 255, 255, 0.88)
+      ) 0 0 no-repeat;
+    background-size: 100% 1000px;
+    background-clip: text;
+    -webkit-text-fill-color: rgba(0, 0, 0, 0);
+    animation: slideShineAnimation var(--animation-duration, 0.5s) linear,
+      floatingAnimation var(--floating-duration, 0.5s) ease-in-out,
+      shadowAnimation var(--shadow-duration, 0.5s) linear,
+      scaleAnimation var(--animation-duration, 0.5s) linear;
+    font-weight: 630;
+  }
+}
+
+@keyframes slideShineAnimation {
+  0% {
+    background-size: 0 1000px;
+  }
+  100% {
+    background-size: 115% 1000px;
+  }
+}
+
 .lyrics-page {
   position: fixed;
   top: 0;
@@ -874,7 +1222,7 @@ export default {
 
 .right-side {
   flex: 1;
-  font-weight: 600;
+  font-weight: 630;
   color: var(--color-text);
   margin-right: 24px;
   z-index: 0;
@@ -888,6 +1236,7 @@ export default {
     overflow-y: auto;
     transition: 0.5s;
     scrollbar-width: none; // firefox
+    position: relative;
 
     .line {
       margin: 2px 0;
@@ -913,7 +1262,7 @@ export default {
 
         span.translation {
           opacity: 0.2;
-          font-size: 0.925em;
+          font-size: 0.725em;
         }
       }
     }
@@ -928,14 +1277,23 @@ export default {
 
     .highlight div.content {
       transform: scale(1);
+
       span {
-        opacity: 0.98;
+        opacity: 1;
+        // opacity: 0.45;
         display: inline-block;
       }
 
       span.translation {
         opacity: 0.65;
       }
+    }
+
+    .highlightWord {
+      opacity: 0.98;
+    }
+    .unhighlightWord {
+      opacity: 0.45;
     }
   }
 

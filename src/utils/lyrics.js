@@ -8,6 +8,17 @@ export function lyricParser(lrc) {
   };
 }
 
+export function lyricByWordParser(lrc) {
+  return {
+    lyric: parseLyric(lrc?.lrc?.lyric || ''),
+    tlyric: parseLyric(lrc?.tlyric?.lyric || ''),
+    romalyric: parseLyric(lrc?.romalrc?.lyric || ''),
+    lyricuser: lrc.lyricUser,
+    transuser: lrc.transUser,
+    yrc: parseByWordLyric(lrc?.yrc?.lyric || ''),
+  };
+}
+
 // regexr.com/6e52n
 const extractLrcRegex =
   /^(?<lyricTimestamps>(?:\[.+?\])+)(?!\[)(?<content>.+)$/gm;
@@ -74,6 +85,29 @@ function parseLyric(lrc) {
   }
 
   return parsedLyrics;
+}
+
+/**
+ * Parse the by-word lyric string. Simply remove 作词 and 作曲.
+ *
+ * @param {string} lrc The `yrc` input.
+ * @returns {ParsedLyric[]} The parsed lyric.
+ * @example parseLyric("[570,990](570,990,0)Roses\n");
+ */
+function parseByWordLyric(lrc) {
+  var parsed_lyric = '';
+  // 遍历每一行
+  for (const line of lrc.split('\n')) {
+    // 如果这一行包含有“作词”或“作曲”字样 或者是空行
+    if (line.includes('{"tx":"') || line === '') {
+      // 则将这一行移除
+      continue;
+    } else {
+      // 否则将这一行添加到歌词中
+      parsed_lyric += line + '\n';
+    }
+  }
+  return parsed_lyric.split('\n');
 }
 
 /**

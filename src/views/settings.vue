@@ -236,17 +236,17 @@
         </div>
         <div class="right">
           <select v-model="lyricFontSize">
-            <option value="16">
+            <!-- <option value="16">
               {{ $t('settings.lyricFontSize.small') }} - 16px
             </option>
             <option value="22">
               {{ $t('settings.lyricFontSize.medium') }} - 22px
-            </option>
-            <option value="28">
-              {{ $t('settings.lyricFontSize.large') }} - 28px
-            </option>
+            </option> -->
             <option value="36">
-              {{ $t('settings.lyricFontSize.xlarge') }} - 36px
+              {{ $t('settings.lyricFontSize.large') }} - 36px
+            </option>
+            <option value="40">
+              {{ $t('settings.lyricFontSize.xlarge') }} - 40px
             </option>
           </select>
         </div>

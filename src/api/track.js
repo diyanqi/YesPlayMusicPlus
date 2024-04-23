@@ -95,6 +95,32 @@ export function getLyric(id) {
 }
 
 /**
+ * 获取逐字歌词
+ * 说明 : 调用此接口 , 传入音乐 id 可获得对应音乐的逐字歌词 ( 不需要登录 )
+ * @param {number} id - 音乐 id
+ */
+export function getLyricByWord(id) {
+  const fetchLatest = () => {
+    return request({
+      url: '/lyric/new',
+      method: 'get',
+      params: {
+        id,
+      },
+    }).then(result => {
+      cacheLyric(id, result);
+      return result;
+    });
+  };
+
+  fetchLatest();
+
+  return getLyricFromCache(id).then(result => {
+    return result ?? fetchLatest();
+  });
+}
+
+/**
  * 新歌速递
  * 说明 : 调用此接口 , 可获取新歌速递
  * @param {number} type - 地区类型 id, 对应以下: 全部:0 华语:7 欧美:96 日本:8 韩国:16

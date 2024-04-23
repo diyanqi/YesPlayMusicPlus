@@ -5,6 +5,7 @@ function resolve(dir) {
 }
 
 module.exports = {
+  transpileDependencies: ['/@pixi/'],
   // 生产环境打包不输出 map
   productionSourceMap: false,
   devServer: {
@@ -12,7 +13,7 @@ module.exports = {
     port: process.env.DEV_SERVER_PORT || 8080,
     proxy: {
       '^/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3000/',
         changeOrigin: true,
         pathRewrite: {
           '^/api': '/',
