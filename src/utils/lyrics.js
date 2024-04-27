@@ -8,14 +8,57 @@ export function lyricParser(lrc) {
   };
 }
 
+function generateYrc(lyric) {
+  let yrc = [];
+  console.log(lyric);
+  for (let i = 0; i < lyric.length; i++) {
+    let { time, content } = lyric[i];
+    let { time: nextTime } = lyric[i + 1] || {
+      time: time + 5,
+      content: '',
+    };
+    let yrcContent = '';
+    const splitedContent = content.split(' ');
+    for (let j = 0; j < splitedContent.length; j++) {
+      yrcContent += `(${Math.round(
+        time * 1000 + ((nextTime - time) * 1000 * j) / splitedContent.length
+      )},${Math.round(((nextTime - time) * 1000) / splitedContent.length)},0)${
+        splitedContent[j]
+      } `;
+    }
+    yrcContent = `[${Math.round(time * 1000)},${Math.round(
+      time * 1000
+    )}]${yrcContent}`;
+    yrc.push(yrcContent);
+  }
+  return yrc;
+  // eslint-disable-next-line no-unused-vars, no-unreachable
+  const test = [
+    '[25.087,25.087](25.087,180.47170990706644,0)K(125.…4122453908515,0)a(4025.087,121.88573086884546,0)r',
+    '[28.094,28.094](28.094,199.30756330243378,0)I(128.…3251135817682,0)a(3428.094,184.61848286289535,0)h',
+    '[33.065,33.065](33.065,103.77901253260806,0)I(133.…7718278466556,0)a(4133.065,129.68323484834522,0)m',
+  ];
+  // return [
+  //   "[53980,4860](53980,60,0)I(54040,150,0)’(54190,90,0…750,0)body's (57760,360,0)had (58120,720,0)enough",
+  //   '[58960,4920](58960,2460,0)Oh(61420,360,0), (61780,… (63010,210,0)old (63220,540,0)love(63760,120,0)）',
+  //   '[63880,4710](63880,2160,0)Oh(66040,490,0), (66530,…me (67900,240,0)old (68140,450,0)love(68590,0,0)）',
+  //   "[68590,4950](68590,30,0)I(68620,240,0)’(68860,90,0…,180,0)I've (72400,450,0)blown (72850,690,0)apart",
+  //   '[73540,5010](73540,90,0)I(73630,150,0)’(73780,120,…390,0)breaks (77680,240,0)your (77920,630,0)heart',
+  // ];
+}
+
 export function lyricByWordParser(lrc) {
+  var temp = parseByWordLyric(lrc?.yrc?.lyric || '');
+  if (temp.length === 1 && temp[0] === '') {
+    temp = generateYrc(parseLyric(lrc?.lrc?.lyric || ''));
+  }
   return {
     lyric: parseLyric(lrc?.lrc?.lyric || ''),
     tlyric: parseLyric(lrc?.tlyric?.lyric || ''),
     romalyric: parseLyric(lrc?.romalrc?.lyric || ''),
     lyricuser: lrc.lyricUser,
     transuser: lrc.transUser,
-    yrc: parseByWordLyric(lrc?.yrc?.lyric || ''),
+    yrc: temp,
   };
 }
 
@@ -94,6 +137,7 @@ function parseLyric(lrc) {
  * @returns {ParsedLyric[]} The parsed lyric.
  * @example parseLyric("[570,990](570,990,0)Roses\n");
  */
+// eslint-disable-next-line no-unused-vars
 function parseByWordLyric(lrc) {
   var parsed_lyric = '';
   // 遍历每一行

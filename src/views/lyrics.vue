@@ -580,7 +580,6 @@ export default {
       };
       for (let key in COLORS) {
         if (content.toLowerCase().includes(key.toLowerCase())) {
-          console.log(key, COLORS[key]);
           return COLORS[key];
         }
       }
@@ -695,12 +694,6 @@ export default {
         } else {
           let { lyric, tlyric, romalyric, yrc } = lyricByWordParser(data);
           // console.log(yrc);
-          // console.log(lyric);
-          // const player = new LyricPlayer(); // 创建歌词播放组件
-          // document.getElementById('amll').appendChild(player.getElement()); // 将组件的元素添加到页面
-          // player.setLyricLines(yrc); // 设置歌词
-          // player.setCurrentTime(0); // 设定当前播放时间（需要逐帧调用）
-          // player.update(0); // 更新歌词组件动画（需要逐帧调用）
           lyric = lyric.filter(
             l => !/^作(词|曲)\s*(:|：)\s*无$/.exec(l.content)
           );
@@ -727,6 +720,7 @@ export default {
             this.tlyric = tlyric;
             this.romalyric = romalyric;
             this.yrc = yrc;
+            console.log('this.yrc', this.yrc);
             if (tlyric.length * romalyric.length > 0) {
               this.lyricType = 'translation';
             } else {
@@ -774,9 +768,7 @@ export default {
         if (oldHighlightLyricIndex !== this.highlightLyricIndex) {
           const el = document.getElementById(`line${this.highlightLyricIndex}`);
           if (el) {
-            // console.log(el);
             const scrollParent = getScrollParent(el);
-            // console.log(scrollParent);
             if (scrollParent) {
               const parentRect = scrollParent.getBoundingClientRect();
               const elRect = el.getBoundingClientRect();
@@ -807,7 +799,6 @@ export default {
               );
               // eslint-disable-next-line no-unused-vars
               const firstScrollIndex = firstVisibleLine;
-              // console.log(firstScrollElement);
               // 获取最后一个可见元素
               var lastVisibleLine = firstVisibleLine;
               var lastScrollElement = firstScrollElement;
@@ -827,7 +818,6 @@ export default {
               }
               // eslint-disable-next-line no-unused-vars
               const lastScrollIndex = lastVisibleLine;
-              // console.log(lastScrollElement);
               // eslint-disable-next-line no-unused-vars
               const scrollDelay = 80; // 元素之间的滚动延迟
               const scrollDuration = 350;
@@ -837,7 +827,6 @@ export default {
               // eslint-disable-next-line no-unused-vars
               const startTime = performance.now();
               // 对每个元素，向上非线性滚动，使用TranslateY
-              // console.log(firstScrollElement, lastScrollElement);
               // 处理 scrollOffset：如果scrollOffset > 剩下可以滚动的距离，那么scrollOffset = 剩下可以滚动的距离
               const scrollOffsetMax =
                 scrollParent.scrollHeight -
