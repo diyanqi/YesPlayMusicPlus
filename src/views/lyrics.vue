@@ -266,8 +266,8 @@
                 :style="{
                   '--blur-px': `${
                     Math.abs(index - highlightLyricIndex) > 5
-                      ? 5
-                      : Math.abs(index - highlightLyricIndex)
+                      ? 5 * 2
+                      : Math.abs(index - highlightLyricIndex) * 2
                   }px`,
                 }"
               >
@@ -589,7 +589,7 @@ export default {
       if (isDarkTheme.matches) {
         return 'rgba(225, 225, 225, 0.25)';
       }
-      return 'rgba(0, 0, 0, 0.75)';
+      return 'rgba(128, 128, 128, 0.25)';
     },
     parseOneLine(line) {
       // "[12270,3420](12270,180,0)I (12450,360,0)took (12810,180,0)an (12990,330,0)arrow (13320,270,0)to (13590,150,0)the (13740,960,0)heart(14700,990,0) "
