@@ -292,7 +292,7 @@
                         :duration="`${y.duration / y.content.length}ms`"
                         :style="{
                           '--floating-duration': `${
-                            y.duration <= 1300 ? 5000 : y.duration * 0.8
+                            y.duration <= 1300 ? 5000 : y.duration * 2
                           }ms`,
                           '--shadow-duration': `${
                             y.duration <= 1300 ? 5000 : y.duration * 2
@@ -580,6 +580,7 @@ export default {
       };
       for (let key in COLORS) {
         if (content.toLowerCase().includes(key.toLowerCase())) {
+          console.log(key, COLORS[key]);
           return COLORS[key];
         }
       }
@@ -779,37 +780,128 @@ export default {
             if (scrollParent) {
               const parentRect = scrollParent.getBoundingClientRect();
               const elRect = el.getBoundingClientRect();
-              const scrollOffset =
+              var scrollOffset =
                 elRect.top -
                 parentRect.top -
                 (parentRect.height - elRect.height) / 2;
-              const scrollDuration = 500;
+              var low = 0;
+              var high = this.lyric.length - 1;
+              while (low <= high) {
+                var mid = Math.floor((low + high) / 2);
+                var midElement = document.getElementById(`line${mid}`);
+                if (midElement) {
+                  var midRect = midElement.getBoundingClientRect();
+                  if (midRect.top < parentRect.top) {
+                    low = mid + 1;
+                  } else {
+                    high = mid - 1;
+                  }
+                } else {
+                  high = mid - 1;
+                }
+              }
+              const firstVisibleLine = low - 1;
+              // get this element
+              const firstScrollElement = document.getElementById(
+                `line${firstVisibleLine}`
+              );
+              // eslint-disable-next-line no-unused-vars
+              const firstScrollIndex = firstVisibleLine;
+              // console.log(firstScrollElement);
+              // 获取最后一个可见元素
+              var lastVisibleLine = firstVisibleLine;
+              var lastScrollElement = firstScrollElement;
+              while (lastScrollElement) {
+                var lastRect = lastScrollElement.getBoundingClientRect();
+                if (lastRect.top < parentRect.top + parentRect.height) {
+                  lastVisibleLine = lastVisibleLine + 1;
+                  lastScrollElement = document.getElementById(
+                    `line${lastVisibleLine}`
+                  );
+                } else {
+                  lastScrollElement = document.getElementById(
+                    `line${lastVisibleLine + 3}`
+                  );
+                  break;
+                }
+              }
+              // eslint-disable-next-line no-unused-vars
+              const lastScrollIndex = lastVisibleLine;
+              // console.log(lastScrollElement);
+              // eslint-disable-next-line no-unused-vars
+              const scrollDelay = 80; // 元素之间的滚动延迟
+              const scrollDuration = 350;
               const scrollStart = scrollParent.scrollTop;
+              // eslint-disable-next-line no-unused-vars
               const scrollEnd = scrollStart + scrollOffset;
+              // eslint-disable-next-line no-unused-vars
               const startTime = performance.now();
+              // 对每个元素，向上非线性滚动，使用TranslateY
+              // console.log(firstScrollElement, lastScrollElement);
+              // 处理 scrollOffset：如果scrollOffset > 剩下可以滚动的距离，那么scrollOffset = 剩下可以滚动的距离
+              const scrollOffsetMax =
+                scrollParent.scrollHeight -
+                scrollParent.scrollTop -
+                scrollParent.clientHeight;
+              if (scrollOffset > scrollOffsetMax) {
+                scrollOffset = scrollOffsetMax;
+              }
+              for (let i = firstVisibleLine; i <= lastVisibleLine; i++) {
+                const el = document.getElementById(`line${i}`);
+                if (el) {
+                  // eslint-disable-next-line no-unused-vars
+                  const elRect = el.getBoundingClientRect();
+                  el.style.transform = `translateY(-${scrollOffset}px)`;
+                  // 1. 要有非线性过渡；2. 要有动画开始延迟：scrollDelay * (i - firstVisibleLine)
+                  // 3. 要有动画持续时间：scrollDuration
+                  el.style.transition = `transform ${scrollDuration}ms cubic-bezier(0.33, 1, 0.68, 1)${
+                    scrollDelay * (i - firstVisibleLine)
+                  }ms`;
+                }
+              }
+              // 在动画完成后，清除所有的 transform 和 transition，并且将滚动条滚动到正确的位置
+              setTimeout(() => {
+                for (let i = firstVisibleLine; i <= lastVisibleLine; i++) {
+                  const el = document.getElementById(`line${i}`);
+                  if (el) {
+                    el.style.transition = 'none';
+                    el.style.transform = '';
+                  }
+                }
+                scrollParent.scrollTop += scrollOffset;
+              }, scrollDuration + scrollDelay * (lastVisibleLine - firstVisibleLine));
 
               // 缓动函数
               // eslint-disable-next-line no-inner-declarations
-              function easeOutQuad(t) {
-                return t * (2 - t);
-              }
+              // function easeOutQuad(t) {
+              //   return t * (2 - t);
+              // }
 
               // eslint-disable-next-line no-inner-declarations
-              function scrollStep(timestamp) {
-                const currentTime = timestamp - startTime;
-                let scrollProgress = Math.min(currentTime / scrollDuration, 1);
-                // 应用缓动函数
-                scrollProgress = easeOutQuad(scrollProgress);
-                const scrollPosition =
-                  scrollStart + (scrollEnd - scrollStart) * scrollProgress;
-                scrollParent.scrollTop = scrollPosition;
+              // function scrollStep(timestamp) {
+              //   const currentTime = timestamp - startTime;
+              //   // eslint-disable-next-line no-unused-vars
+              //   let scrollProgress = Math.min(currentTime / scrollDuration, 1);
+              //   // 应用缓动函数
+              //   scrollProgress = easeOutQuad(scrollProgress);
 
-                if (currentTime < scrollDuration) {
-                  window.requestAnimationFrame(scrollStep);
-                }
-              }
+              //   // 处理 firstScrollElement 到 lastScrollElement 之间的滚动，使用TranslateY
+              //   for(let i = firstVisibleLine; i <= lastVisibleLine; i++) {
+              //     const el = document.getElementById(`line${i}`);
+              //     if (el) {
+              //       const elRect = el.getBoundingClientRect();
+              //       const scrollOffset = elRect.top - parentRect.top - (parentRect.height - elRect.height) / 2;
+              //       const translateY = scrollOffset - scrollOffset * scrollProgress;
+              //       el.style.transform = `translateY(${translateY}px)`;
+              //     }
+              //   }
 
-              window.requestAnimationFrame(scrollStep);
+              //   if (currentTime < scrollDuration) {
+              //     window.requestAnimationFrame(scrollStep);
+              //   }
+              // }
+
+              // window.requestAnimationFrame(scrollStep);
             }
           }
 
@@ -881,15 +973,15 @@ export default {
   0% {
     transform: translateY(0) scale(1);
   }
-  15% {
+  /* 15% {
     transform: translateY(-1.8px) scale(1.027);
-  }
-  50% {
+  } */
+  20% {
     transform: translateY(-2px) scale(1.03);
   }
-  85% {
+  /* 85% {
     transform: translateY(-1.8px) scale(1.027);
-  }
+  } */
   100% {
     transform: translateY(0) scale(1);
   }
