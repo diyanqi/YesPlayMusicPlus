@@ -250,8 +250,7 @@
                   line.time - lyricToShow[Math.max(0, index - 1)].time
                 }s linear`,
                 display:
-                  line.content === '● ● ●' &&
-                  playerTime >= lyricToShow[1].time - 0.1
+                  line.content === '● ● ●' && playerTime >= lyricToShow[1].time
                     ? 'none'
                     : 'block',
               }"
@@ -259,7 +258,7 @@
                 highlight: highlightLyricIndex === index,
                 bouncingFadeOut:
                   line.content === '● ● ●' &&
-                  playerTime >= lyricToShow[1].time - 1.1,
+                  playerTime >= lyricToShow[1].time - 1,
               }"
               @click="clickLyricLine(line.time)"
               @dblclick="clickLyricLine(line.time, true)"
