@@ -8,9 +8,10 @@ export function lyricParser(lrc) {
   };
 }
 
+// eslint-disable-next-line no-unused-vars
 function generateYrc(lyric) {
   let yrc = [];
-  console.log(lyric);
+  // console.log(lyric);
   for (let i = 0; i < lyric.length; i++) {
     let { time, content } = lyric[i];
     let { time: nextTime } = lyric[i + 1] || {
@@ -48,10 +49,12 @@ function generateYrc(lyric) {
 }
 
 export function lyricByWordParser(lrc) {
+  // eslint-disable-next-line no-unused-vars
   var temp = parseByWordLyric(lrc?.yrc?.lyric || '');
-  if (temp.length === 1 && temp[0] === '') {
-    temp = generateYrc(parseLyric(lrc?.lrc?.lyric || ''));
-  }
+  // if (temp.length === 1 && temp[0] === '') {
+  //   temp = generateYrc(parseLyric(lrc?.lrc?.lyric || ''));
+  // }
+  // console.log(temp);
   return {
     lyric: parseLyric(lrc?.lrc?.lyric || ''),
     tlyric: parseLyric(lrc?.tlyric?.lyric || ''),

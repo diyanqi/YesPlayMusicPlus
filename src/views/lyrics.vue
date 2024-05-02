@@ -249,9 +249,17 @@
                 animation: `highlighting ${
                   line.time - lyricToShow[Math.max(0, index - 1)].time
                 }s linear`,
+                display:
+                  line.content === '● ● ●' &&
+                  playerTime >= lyricToShow[1].time - 0.1
+                    ? 'none'
+                    : 'block',
               }"
               :class="{
                 highlight: highlightLyricIndex === index,
+                bouncingFadeOut:
+                  line.content === '● ● ●' &&
+                  playerTime >= lyricToShow[1].time - 1.1,
               }"
               @click="clickLyricLine(line.time)"
               @dblclick="clickLyricLine(line.time, true)"
@@ -266,8 +274,8 @@
                 :style="{
                   '--blur-px': `${
                     Math.abs(index - highlightLyricIndex) > 3
-                      ? 3 * 1
-                      : Math.abs(index - highlightLyricIndex) * 1
+                      ? 3 * 1.5
+                      : Math.abs(index - highlightLyricIndex) * 1.5
                   }px`,
                 }"
               >
@@ -587,7 +595,7 @@ export default {
       // 如果系统配色为暗色，则返回白色
       const isDarkTheme =
         document.querySelector('body[data-theme="dark"]') !== null;
-      if (isDarkTheme.matches) {
+      if (isDarkTheme) {
         return 'rgba(225, 225, 225, 0.25)';
       }
       return 'rgba(128, 128, 128, 0.25)';
@@ -722,7 +730,7 @@ export default {
             this.tlyric = tlyric;
             this.romalyric = romalyric;
             this.yrc = yrc;
-            console.log('this.yrc', this.yrc);
+            // console.log('this.yrc', this.yrc);
             if (tlyric.length * romalyric.length > 0) {
               this.lyricType = 'translation';
             } else {
@@ -767,6 +775,36 @@ export default {
             progress >= l.time && (nextLyric ? progress < nextLyric.time : true)
           );
         });
+        var firstTime = 0;
+        for (var i = 0; i < this.lyric.length; i++) {
+          if (this.lyric[i].content !== '● ● ●') {
+            firstTime = this.lyric[i].time;
+            break;
+          }
+        }
+        // console.log(firstTime);
+        if (this.playerTime < firstTime) {
+          if (this.yrc) {
+            // 在 yrc 的最前面插上一行
+            if (firstTime > 5) {
+              const data = `[0,${firstTime * 1000 - 1500}](0,${
+                firstTime * 1000 - 1500
+              },0)● ● ●`;
+              if (this.yrc[0] !== data) {
+                this.yrc.unshift(data);
+                this.lyric.unshift({
+                  time: 0,
+                  content: '● ● ●',
+                });
+              }
+            }
+          }
+        } else if (this.yrc) {
+          // if (this.lyric[0].content === '● ● ●') {
+          //   this.yrc[0] = '';
+          //   this.lyric[0] = '';
+          // }
+        }
         if (oldHighlightLyricIndex !== this.highlightLyricIndex) {
           const el = document.getElementById(`line${this.highlightLyricIndex}`);
           if (el) {
@@ -964,6 +1002,31 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.bouncingFadeOut {
+  span {
+    animation: bouncingFadeOut 1s ease-in-out !important;
+  }
+}
+
+@keyframes bouncingFadeOut {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
 .filterBlur {
   filter: blur(var(--blur-px, 0px));
 }
