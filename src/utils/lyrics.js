@@ -58,7 +58,7 @@ export function lyricByWordParser(lrc) {
     romalyric: parseLyric(lrc?.romalrc?.lyric || ''),
     lyricuser: lrc.lyricUser,
     transuser: lrc.transUser,
-    yrc: temp,
+    yrc: parseByWordLyric(lrc?.yrc?.lyric || ''),
   };
 }
 
