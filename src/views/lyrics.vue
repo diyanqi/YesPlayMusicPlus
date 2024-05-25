@@ -809,7 +809,7 @@ export default {
           if (el) {
             const scrollParent = getScrollParent(el);
             if (scrollParent) {
-              const scrollDuration = 350;
+              const scrollDuration = 300;
               const scrollStart = scrollParent.scrollTop;
               if (
                 Math.abs(oldHighlightLyricIndex - this.highlightLyricIndex) ===
@@ -864,7 +864,7 @@ export default {
                 // eslint-disable-next-line no-unused-vars
                 const lastScrollIndex = lastVisibleLine;
                 // eslint-disable-next-line no-unused-vars
-                const scrollDelay = 80; // 元素之间的滚动延迟
+                const scrollDelay = 50; // 元素之间的滚动延迟
                 // eslint-disable-next-line no-unused-vars
                 const scrollEnd = scrollStart + scrollOffset;
                 // eslint-disable-next-line no-unused-vars
