@@ -258,7 +258,7 @@
                 highlight: highlightLyricIndex === index,
                 bouncingFadeOut:
                   line.content === '● ● ●' &&
-                  playerTime >= lyricToShow[1].time - 1,
+                  playerTime >= lyricToShow[1].time - 0.7,
               }"
               @click="clickLyricLine(line.time)"
               @dblclick="clickLyricLine(line.time, true)"
@@ -1003,7 +1003,7 @@ export default {
 <style lang="scss" scoped>
 .bouncingFadeOut {
   span {
-    animation: bouncingFadeOut 1s ease-in-out !important;
+    animation: bouncingFadeOut 0.7s ease-in-out !important;
   }
 }
 
@@ -1016,13 +1016,9 @@ export default {
     transform: scale(1.1);
     opacity: 0.9;
   }
-  70% {
-    transform: scale(0.3);
-    opacity: 0;
-  }
   100% {
-    transform: scale(0);
-    opacity: 0;
+    transform: scale(0.3);
+    opacity: 0.3;
   }
 }
 
