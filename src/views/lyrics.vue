@@ -316,7 +316,7 @@
                           '--animation-color':
                             y.duration > 1300
                               ? 'rgba(256, 256, 256, 1)'
-                              : getColor(c),
+                              : getColor(y.content),
                         }"
                         :class="{
                           slideShine:
@@ -1012,7 +1012,7 @@ export default {
     transform: scale(1);
     opacity: 1;
   }
-  30% {
+  50% {
     transform: scale(1.1);
     opacity: 0.9;
   }
@@ -1048,27 +1048,15 @@ export default {
   }
 }
 
-@keyframes scaleAnimation {
-  0% {
-    font-size: 1em;
-  }
-  50% {
-    font-size: 1em;
-  }
-  100% {
-    font-size: 1em;
-  }
-}
-
 @keyframes shadowAnimation {
   0% {
     text-shadow: 0;
   }
-  25% {
+  20% {
     text-shadow: var(--animation-shadow-offset) var(--animation-shadow-offset)
       var(--animation-shadow-blur) var(--animation-color);
   }
-  75% {
+  70% {
     text-shadow: var(--animation-shadow-offset) var(--animation-shadow-offset)
       var(--animation-shadow-blur) var(--animation-color);
   }
@@ -1088,9 +1076,8 @@ export default {
   -webkit-text-fill-color: rgba(0, 0, 0, 0);
   animation: slideShineAnimation var(--animation-duration, 0.5s) linear,
     floatingAnimation var(--floating-duration, 0.5s) ease-in-out,
-    shadowAnimation var(--shadow-duration, 0.5s) linear,
-    scaleAnimation var(--animation-duration, 0.5s) linear;
-  font-weight: 630;
+    shadowAnimation var(--shadow-duration, 0.5s) linear;
+  font-weight: 800;
 }
 
 [data-theme='dark'] .slideShine {
@@ -1103,10 +1090,9 @@ export default {
   background-clip: text;
   -webkit-text-fill-color: rgba(0, 0, 0, 0);
   animation: slideShineAnimation var(--animation-duration, 0.5s) linear,
-    floatingAnimation var(--floating-duration, 0.5s) ease-in-out,
     shadowAnimation var(--shadow-duration, 0.5s) linear,
-    scaleAnimation var(--animation-duration, 0.5s) linear;
-  font-weight: 630;
+    floatingAnimation var(--floating-duration, 0.5s) ease-in-out;
+  font-weight: 800;
 }
 
 @keyframes slideShineAnimation {
@@ -1373,7 +1359,7 @@ export default {
 
 .right-side {
   flex: 1;
-  font-weight: 630;
+  font-weight: 800;
   color: var(--color-text);
   margin-right: 24px;
   z-index: 0;
