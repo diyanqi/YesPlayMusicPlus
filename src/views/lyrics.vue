@@ -278,20 +278,40 @@
                   }px`,
                 }"
               >
-                <span v-if="yrcToShow[index]">
+                <span
+                  v-if="yrcToShow[index]"
+                  :class="{
+                    bouncingFadeOut: playerTime >= yrcToShow[index].time - 0.7,
+                  }"
+                >
                   <font
-                    v-for="(y, ind) in parseOneLine(yrcToShow[index])"
+                    v-for="(y, ind) in parseOneLine(
+                      yrcToShow[index].split('（')[0]
+                    )"
                     :key="ind"
                     :start="`${y.time}`"
                     :duration="`${y.duration}ms`"
                     :style="{
-                      display: 'inline-block',
+                      display:
+                        y.content.indexOf('（') === -1
+                          ? 'inline-block'
+                          : highlightLyricIndex === index
+                          ? 'block'
+                          : 'none',
                       'white-space': 'pre',
+                      transform:
+                        yrcToShow[index].indexOf('（') >=
+                          yrcToShow[index].indexOf(y.content) ||
+                        yrcToShow[index].indexOf('（') === -1
+                          ? 'none'
+                          : 'scale(0.8)',
                     }"
                   >
                     <font v-if="highlightLyricIndex === index">
                       <font
-                        v-for="(c, i) in y.content"
+                        v-for="(c, i) in y.content
+                          .replace('（', '')
+                          .replace('）', '')"
                         :key="i"
                         :start="`${
                           y.time + (i * y.duration) / y.content.length
@@ -307,7 +327,7 @@
                           '--animation-duration': `${
                             y.duration / y.content.length
                           }ms`,
-                          display: c === ' ' ? 'initial' : 'inline-block',
+                          display: c === '(' ? 'block' : 'inline-block',
                           '--shining-duration': `${y.duration - 50}ms`,
                           '--animation-shadow-offset':
                             y.duration > 1300 ? '0px' : '2px',
@@ -328,17 +348,133 @@
                             playerTime * 1000 <
                               y.time + (i * y.duration) / y.content.length,
                         }"
-                        >{{ c }}</font
+                        >{{ c === '（' ? '\n' : c }}</font
                       >
                     </font>
                     <font
-                      v-else
+                      v-else-if="
+                        yrcToShow[index].indexOf('（') >
+                          yrcToShow[index].indexOf(y.content) ||
+                        yrcToShow[index].indexOf('（') === -1
+                      "
                       :style="{
-                        display: 'inline-block',
+                        display:
+                          yrcToShow[index].indexOf('（') >
+                            yrcToShow[index].indexOf(y.content) ||
+                          yrcToShow[index].indexOf('（') === -1
+                            ? 'inline-block'
+                            : 'none',
                         'white-space': 'pre',
                       }"
                     >
                       <font v-for="(c, i) in y.content" :key="i">{{ c }}</font>
+                    </font>
+                  </font>
+                  <font
+                    v-if="
+                      yrcToShow[index].indexOf('（') != -1 &&
+                      highlightLyricIndex === index
+                    "
+                  >
+                    <br />
+                  </font>
+                  <font
+                    v-if="
+                      yrcToShow[index].indexOf('（') != -1 &&
+                      highlightLyricIndex === index
+                    "
+                    :style="{
+                      'white-space': 'pre',
+                      float: 'right',
+                      transform: 'scale(0.8)',
+                    }"
+                  >
+                    <font
+                      v-for="(y, ind) in parseOneLine(
+                        '（' + yrcToShow[index].split('（')[1]
+                      )"
+                      :key="ind"
+                      :start="`${y.time}`"
+                      :duration="`${y.duration}ms`"
+                      :style="{
+                        display:
+                          y.content.indexOf('（') === -1
+                            ? 'inline-block'
+                            : highlightLyricIndex === index
+                            ? 'block'
+                            : 'none',
+                      }"
+                    >
+                      <font
+                        v-if="
+                          highlightLyricIndex === index &&
+                          yrcToShow[index].indexOf('（') <=
+                            yrcToShow[index].indexOf(y.content)
+                        "
+                      >
+                        <font
+                          v-for="(c, i) in y.content
+                            .replace('（', '')
+                            .replace('）', '')"
+                          :key="i"
+                          :start="`${
+                            y.time + (i * y.duration) / y.content.length
+                          }`"
+                          :duration="`${y.duration / y.content.length}ms`"
+                          :style="{
+                            '--floating-duration': `${
+                              y.duration <= 1300 ? 5000 : 5000
+                            }ms`,
+                            '--shadow-duration': `${
+                              y.duration <= 1300 ? 5000 : y.duration * 2
+                            }ms`,
+                            '--animation-duration': `${
+                              y.duration / y.content.length
+                            }ms`,
+                            display: c === '(' ? 'block' : 'inline-block',
+                            '--shining-duration': `${y.duration - 50}ms`,
+                            '--animation-shadow-offset':
+                              y.duration > 1300 ? '0px' : '2px',
+                            '--animation-shadow-blur':
+                              y.duration > 1300 ? '45px' : '3px',
+                            '--animation-color':
+                              y.duration > 1300
+                                ? 'rgba(256, 256, 256, 1)'
+                                : getColor(y.content),
+                          }"
+                          :class="{
+                            slideShine:
+                              highlightLyricIndex === index &&
+                              playerTime * 1000 >=
+                                y.time + (i * y.duration) / y.content.length,
+                            unhighlightWord:
+                              highlightLyricIndex === index &&
+                              playerTime * 1000 <
+                                y.time + (i * y.duration) / y.content.length,
+                          }"
+                          >{{ c === '（' ? '\n' : c }}</font
+                        >
+                      </font>
+                      <font
+                        v-else-if="
+                          yrcToShow[index].indexOf('（') >
+                            yrcToShow[index].indexOf(y.content) ||
+                          yrcToShow[index].indexOf('（') === -1
+                        "
+                        :style="{
+                          display:
+                            yrcToShow[index].indexOf('（') >
+                              yrcToShow[index].indexOf(y.content) ||
+                            yrcToShow[index].indexOf('（') === -1
+                              ? 'inline-block'
+                              : 'none',
+                          'white-space': 'pre',
+                        }"
+                      >
+                        <font v-for="(c, i) in y.content" :key="i">{{
+                          c
+                        }}</font>
+                      </font>
                     </font>
                   </font>
                 </span>
@@ -811,10 +947,7 @@ export default {
             if (scrollParent) {
               const scrollDuration = 300;
               const scrollStart = scrollParent.scrollTop;
-              if (
-                Math.abs(oldHighlightLyricIndex - this.highlightLyricIndex) ===
-                1
-              ) {
+              if (oldHighlightLyricIndex - this.highlightLyricIndex === -1) {
                 const parentRect = scrollParent.getBoundingClientRect();
                 const elRect = el.getBoundingClientRect();
                 var scrollOffset =
@@ -886,7 +1019,7 @@ export default {
                     el.style.transform = `translateY(-${scrollOffset}px)`;
                     // 1. 要有非线性过渡；2. 要有动画开始延迟：scrollDelay * (i - firstVisibleLine)
                     // 3. 要有动画持续时间：scrollDuration
-                    el.style.transition = `transform ${scrollDuration}ms cubic-bezier(0.33, 1, 0.68, 1)${
+                    el.style.transition = `transform ${scrollDuration}ms cubic-bezier(.33,1,.5,1.05)${
                       scrollDelay * (i - firstVisibleLine)
                     }ms`;
                   }
@@ -1069,9 +1202,10 @@ export default {
   background: rgba(0, 0, 0, 0.45) -webkit-linear-gradient(
       left,
       rgba(0, 0, 0, 0.88),
-      rgba(0, 0, 0, 0.88)
+      rgba(0, 0, 0, 0.88),
+      rgba(0, 0, 0, 0)
     ) 0 0 no-repeat;
-  background-size: 100% 1000px;
+  background-size: 200% 1000px;
   background-clip: text;
   -webkit-text-fill-color: rgba(0, 0, 0, 0);
   animation: slideShineAnimation var(--animation-duration, 0.5s) linear,
@@ -1084,9 +1218,10 @@ export default {
   background: rgba(255, 255, 255, 0.45) -webkit-linear-gradient(
       left,
       rgba(255, 255, 255, 0.88),
-      rgba(255, 255, 255, 0.88)
+      rgba(255, 255, 255, 0.88),
+      rgba(255, 255, 255, 0)
     ) 0 0 no-repeat;
-  background-size: 100% 1000px;
+  background-size: 200% 1000px;
   background-clip: text;
   -webkit-text-fill-color: rgba(0, 0, 0, 0);
   animation: slideShineAnimation var(--animation-duration, 0.5s) linear,
@@ -1413,7 +1548,7 @@ export default {
     }
 
     .highlight div.content {
-      transform: scale(1);
+      width: 101%;
 
       span {
         opacity: 1;
