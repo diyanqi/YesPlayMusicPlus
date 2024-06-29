@@ -384,9 +384,10 @@
                       highlightLyricIndex === index
                     "
                     :style="{
-                      'white-space': 'pre',
+                      'white-space': 'pre-wrap',
                       float: 'right',
                       transform: 'scale(0.8)',
+                      'text-align': 'right',
                     }"
                   >
                     <font
@@ -945,7 +946,7 @@ export default {
           if (el) {
             const scrollParent = getScrollParent(el);
             if (scrollParent) {
-              const scrollDuration = 300;
+              const scrollDuration = 600;
               const scrollStart = scrollParent.scrollTop;
               if (oldHighlightLyricIndex - this.highlightLyricIndex === -1) {
                 const parentRect = scrollParent.getBoundingClientRect();
@@ -1019,9 +1020,22 @@ export default {
                     el.style.transform = `translateY(-${scrollOffset}px)`;
                     // 1. 要有非线性过渡；2. 要有动画开始延迟：scrollDelay * (i - firstVisibleLine)
                     // 3. 要有动画持续时间：scrollDuration
-                    el.style.transition = `transform ${scrollDuration}ms cubic-bezier(.33,1,.5,1.05)${
-                      scrollDelay * (i - firstVisibleLine)
+                    el.style.transition = `transform ${scrollDuration}ms cubic-bezier(0.4, 1.31, 0.4, 1)${
+                      scrollDelay * (i - firstVisibleLine) +
+                      10 *
+                        (i - firstVisibleLine - 1) *
+                        (i - firstVisibleLine - 1)
                     }ms`;
+                    try {
+                      el.children[0].style.transform = 'scale(0.97)';
+                      el.children[0].style.transition = `transform ${
+                        scrollDuration / 2
+                      }ms`;
+                      setTimeout(() => {
+                        el.children[0].style.transform = 'scale(1)';
+                      }, scrollDuration / 2);
+                      // eslint-disable-next-line no-empty
+                    } catch (e) {}
                   }
                 }
                 // 在动画完成后，清除所有的 transform 和 transition，并且将滚动条滚动到正确的位置
@@ -1137,6 +1151,18 @@ export default {
 .bouncingFadeOut {
   span {
     animation: bouncingFadeOut 0.7s ease-in-out !important;
+  }
+}
+
+@keyframes scaleUpDown {
+  0% {
+    transform: translateY(var(--scrollOffset)) scale(1);
+  }
+  50% {
+    transform: translateY(var(--scrollOffset)) scale(0.8);
+  }
+  100% {
+    transform: translateY(var(--scrollOffset)) scale(1);
   }
 }
 
