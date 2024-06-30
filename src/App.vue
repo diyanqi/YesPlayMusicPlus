@@ -121,7 +121,8 @@ main {
   bottom: 0;
   right: 0;
   left: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden !important;
   padding: 64px 10vw 96px 10vw;
   box-sizing: border-box;
   scrollbar-width: none; // firefox

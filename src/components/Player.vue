@@ -1,5 +1,11 @@
 <template>
-  <div class="player" @click="toggleLyrics">
+  <div
+    class="player"
+    :style="{
+      '--player-height': _isMobile ? '128px' : '64px',
+    }"
+    @click="toggleLyrics"
+  >
     <div
       class="progress-bar"
       :class="{
@@ -74,6 +80,7 @@
         <div class="blank"></div>
         <div class="container" @click.stop>
           <button-icon
+            v-if="!_isMobile"
             v-show="!player.isPersonalFM"
             :title="$t('player.previous')"
             @click.native="playPrevTrack"
@@ -98,7 +105,12 @@
         </div>
         <div class="blank"></div>
       </div>
-      <div class="right-control-buttons">
+      <br v-if="_isMobile" />
+      <div
+        :class="`${
+          _isMobile ? 'middle-control-buttons' : 'right-control-buttons'
+        }`"
+      >
         <div class="blank"></div>
         <div class="container" @click.stop>
           <button-icon
@@ -153,7 +165,7 @@
                 icon-class="volume-half"
               />
             </button-icon>
-            <div class="volume-bar">
+            <div v-if="!_isMobile" class="volume-bar">
               <vue-slider
                 v-model="volume"
                 :min="0"
@@ -199,6 +211,12 @@ export default {
     ...mapState(['player', 'settings', 'data']),
     currentTrack() {
       return this.player.currentTrack;
+    },
+    _isMobile() {
+      let flag = navigator.userAgent.match(
+        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
+      );
+      return flag;
     },
     volume: {
       get() {
@@ -283,7 +301,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  height: 64px;
+  height: var(--player-height);
   backdrop-filter: saturate(180%) blur(30px);
   // background-color: rgba(255, 255, 255, 0.86);
   background-color: var(--color-navbar-bg);

@@ -287,8 +287,8 @@
                 :style="{
                   '--blur-px': `${
                     Math.abs(index - highlightLyricIndex) > 3
-                      ? 3 * 1.5
-                      : Math.abs(index - highlightLyricIndex) * 1.5
+                      ? 3 * 2
+                      : Math.abs(index - highlightLyricIndex) * 2
                   }px`,
                 }"
               >
@@ -1285,16 +1285,11 @@ export default {
 @keyframes floatingAnimation {
   0% {
     transform: translateY(0) scale(1);
+    animation-timing-function: cubic-bezier(0.4, 1.31, 0.4, 1);
   }
-  /* 15% {
-    transform: translateY(-1.8px) scale(1.027);
-  } */
-  20% {
-    transform: translateY(-2px) scale(1.03);
+  25% {
+    transform: translateY(-3px) scale(1.03);
   }
-  /* 85% {
-    transform: translateY(-1.8px) scale(1.027);
-  } */
   100% {
     transform: translateY(0) scale(1);
   }
@@ -1304,7 +1299,7 @@ export default {
   0% {
     text-shadow: 0;
   }
-  20% {
+  15% {
     text-shadow: var(--animation-shadow-offset) var(--animation-shadow-offset)
       var(--animation-shadow-blur) var(--animation-color);
   }

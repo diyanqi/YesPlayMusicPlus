@@ -1,9 +1,15 @@
 <template>
   <div>
-    <nav :class="{ 'has-custom-titlebar': hasCustomTitlebar }">
+    <nav
+      :class="{ 'has-custom-titlebar': hasCustomTitlebar }"
+      :style="{
+        display: _isMobile ? 'table' : 'flex',
+        'min-height': _isMobile ? '100px' : 'auto',
+      }"
+    >
       <Win32Titlebar v-if="enableWin32Titlebar" />
       <LinuxTitlebar v-if="enableLinuxTitlebar" />
-      <div class="navigation-buttons">
+      <div v-if="!_isMobile" class="navigation-buttons">
         <button-icon @click.native="go('back')"
           ><svg-icon icon-class="arrow-left"
         /></button-icon>
@@ -12,20 +18,26 @@
         /></button-icon>
       </div>
       <div class="navigation-links">
-        <router-link to="/" :class="{ active: $route.name === 'home' }">{{
-          $t('nav.home')
-        }}</router-link>
+        <router-link
+          to="/"
+          :class="{ active: $route.name === 'home' }"
+          style="min-width: 36px"
+          >{{ $t('nav.home') }}</router-link
+        >
         <router-link
           to="/explore"
           :class="{ active: $route.name === 'explore' }"
+          style="min-width: 36px"
           >{{ $t('nav.explore') }}</router-link
         >
         <router-link
           to="/library"
           :class="{ active: $route.name === 'library' }"
+          style="min-width: 54px"
           >{{ $t('nav.library') }}</router-link
         >
       </div>
+      <br v-if="_isMobile" />
       <div class="right-part">
         <div class="search-box">
           <div class="container" :class="{ active: inputFocus }">
@@ -116,6 +128,12 @@ export default {
     },
     hasCustomTitlebar() {
       return this.enableWin32Titlebar || this.enableLinuxTitlebar;
+    },
+    _isMobile() {
+      let flag = navigator.userAgent.match(
+        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
+      );
+      return flag;
     },
   },
   created() {

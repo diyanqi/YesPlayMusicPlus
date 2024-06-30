@@ -46,6 +46,7 @@
         :show-play-button="true"
         :show-play-count="activeCategory !== '排行榜' ? true : false"
         :image-size="activeCategory !== '排行榜' ? 512 : 1024"
+        :column-number="`${_isMobile ? 2 : 5}`"
       />
     </div>
     <div
@@ -108,6 +109,12 @@ export default {
       if (this.activeCategory === '排行榜') return 'updateFrequency';
       if (this.activeCategory === '推荐歌单') return 'copywriter';
       return 'none';
+    },
+    _isMobile() {
+      let flag = navigator.userAgent.match(
+        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
+      );
+      return flag;
     },
   },
   activated() {

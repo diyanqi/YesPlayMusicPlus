@@ -3,6 +3,9 @@
     <div
       v-if="specialPlaylistInfo === undefined && !isLikeSongsPage"
       class="playlist-info"
+      :style="{
+        display: _isMobile ? 'block' : 'flex',
+      }"
     >
       <Cover
         :id="playlist.id"
@@ -10,12 +13,13 @@
         :show-play-button="true"
         :always-show-shadow="true"
         :click-cover-to-play="true"
-        :fixed-size="288"
+        :fixed-size="_isMobile ? undefined : 288"
         type="playlist"
         :cover-hover="false"
         :play-button-size="18"
         @click.right.native="openMenu"
       />
+      <br v-if="_isMobile" />
       <div class="info">
         <div class="title" @click.right="openMenu"
           ><span v-if="playlist.privacy === 10" class="lock-icon">
@@ -401,6 +405,12 @@ export default {
                 .includes(this.searchKeyWords.toLowerCase())
           )
       );
+    },
+    _isMobile() {
+      let flag = navigator.userAgent.match(
+        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
+      );
+      return flag;
     },
   },
   created() {

@@ -1,15 +1,16 @@
 <template>
-  <div v-show="show" class="home">
+  <div v-show="show" class="home" style="overflow-x: hidden">
     <div
       v-if="settings.showPlaylistsByAppleMusic !== false"
       class="index-row first-row"
     >
-      <div class="title"> by Apple Music </div>
+      <div class="title"> 时下流行 </div>
       <CoverRow
         :type="'playlist'"
         :items="byAppleMusic"
         sub-text="appleMusic"
         :image-size="1024"
+        :column-number="`${_isMobile ? 2 : 5}`"
       />
     </div>
     <div class="index-row">
@@ -23,21 +24,23 @@
         :type="'playlist'"
         :items="recommendPlaylist.items"
         sub-text="copywriter"
+        :column-number="`${_isMobile ? 2 : 5}`"
       />
     </div>
     <div class="index-row">
       <div class="title"> For You </div>
       <div class="for-you-row">
-        <DailyTracksCard ref="DailyTracksCard" />
-        <FMCard />
+        <DailyTracksCard ref="DailyTracksCard" style="max-width: 97%" />
+        <br v-if="_isMobile" />
+        <FMCard style="max-width: 97%" />
       </div>
     </div>
     <div class="index-row">
       <div class="title">{{ $t('home.recommendArtist') }}</div>
       <CoverRow
         type="artist"
-        :column-number="6"
         :items="recommendArtists.items"
+        :column-number="`${_isMobile ? 3 : 6}`"
       />
     </div>
     <div class="index-row">
@@ -49,6 +52,7 @@
         type="album"
         :items="newReleasesAlbum.items"
         sub-text="artist"
+        :column-number="`${_isMobile ? 2 : 5}`"
       />
     </div>
     <div class="index-row">
@@ -63,6 +67,7 @@
         :items="topList.items"
         sub-text="updateFrequency"
         :image-size="1024"
+        :column-number="`${_isMobile ? 2 : 5}`"
       />
     </div>
   </div>
@@ -102,6 +107,12 @@ export default {
     ...mapState(['settings']),
     byAppleMusic() {
       return byAppleMusic;
+    },
+    _isMobile() {
+      let flag = navigator.userAgent.match(
+        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
+      );
+      return flag;
     },
   },
   activated() {

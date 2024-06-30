@@ -7,7 +7,12 @@
         loading="lazy"
       />{{ data.user.nickname }}{{ $t('library.sLibrary') }}
     </h1>
-    <div class="section-one">
+    <div
+      class="section-one"
+      :style="{
+        display: _isMobile ? 'block' : 'flex',
+      }"
+    >
       <div class="liked-songs" @click="goToLikedSongsList">
         <div class="top">
           <p>
@@ -31,11 +36,12 @@
           </button>
         </div>
       </div>
+      <br v-if="_isMobile" />
       <div class="songs">
         <TrackList
           :id="liked.playlists.length > 0 ? liked.playlists[0].id : 0"
           :tracks="liked.songsWithDetails"
-          :column-number="3"
+          :column-number="`${_isMobile ? 1 : 3}`"
           type="tracklist"
           dbclick-track-func="playPlaylistByID"
         />
@@ -118,6 +124,7 @@
             type="playlist"
             sub-text="creator"
             :show-play-button="true"
+            :column-number="`${_isMobile ? 2 : 5}`"
           />
         </div>
       </div>
@@ -128,6 +135,7 @@
           type="album"
           sub-text="artist"
           :show-play-button="true"
+          :column-number="`${_isMobile ? 2 : 5}`"
         />
       </div>
 
@@ -136,6 +144,7 @@
           :items="liked.artists"
           type="artist"
           :show-play-button="true"
+          :column-number="`${_isMobile ? 2 : 5}`"
         />
       </div>
 
@@ -299,6 +308,12 @@ export default {
         return this.liked.playHistory.allData;
       }
       return [];
+    },
+    _isMobile() {
+      let flag = navigator.userAgent.match(
+        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
+      );
+      return flag;
     },
   },
   created() {
