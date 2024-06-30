@@ -223,6 +223,20 @@
               >
                 <span class="lyric-switch-icon">音</span>
               </button-icon>
+              <button-icon
+                v-show="
+                  isShowLyricTypeSwitch &&
+                  $store.state.settings.showLyricsTranslation &&
+                  lyricType === 'both'
+                "
+                :title="
+                  $t('player.PronunciationLyric') &
+                  $t('player.translationLyric')
+                "
+                @click.native="switchLyricType"
+              >
+                <span class="lyric-switch-icon">全</span>
+              </button-icon>
             </div>
           </div>
         </div>
@@ -381,13 +395,28 @@
                   <font
                     v-if="
                       yrcToShow[index].indexOf('（') != -1 &&
-                      highlightLyricIndex === index
+                      highlightLyricIndex === index &&
+                      playerTime * 1000 >=
+                        parseOneLine(yrcToShow[index].split('（')[1])[0].time -
+                          500
                     "
                     :style="{
                       'white-space': 'pre-wrap',
                       float: 'right',
-                      transform: 'scale(0.8)',
                       'text-align': 'right',
+                      transform:
+                        playerTime * 1000 >=
+                        parseOneLine(yrcToShow[index].split('（')[1])[0].time -
+                          500
+                          ? 'scale(0.8)'
+                          : 'scale(0.3)',
+                      opacity:
+                        playerTime * 1000 >=
+                        parseOneLine(yrcToShow[index].split('（')[1])[0].time -
+                          500
+                          ? 1
+                          : 0,
+                      transition: 'transform 0.5s, opacity 0.5s',
                     }"
                   >
                     <font
@@ -480,6 +509,20 @@
                   </font>
                 </span>
                 <span v-else>{{ line.contents[0] }}</span>
+                <br
+                  v-if="
+                    line.contents[2] &&
+                    $store.state.settings.showLyricsTranslation
+                  "
+                />
+                <span
+                  v-if="
+                    line.contents[2] &&
+                    $store.state.settings.showLyricsTranslation
+                  "
+                  class="translation"
+                  >{{ line.contents[2] }}</span
+                >
                 <br />
                 <span
                   v-if="
@@ -536,7 +579,7 @@ export default {
       tlyric: [],
       romalyric: [],
       yrc: [],
-      lyricType: 'translation', // or 'romaPronunciation'
+      lyricType: 'translation', // or 'romaPronunciation' or 'both'
       highlightLyricIndex: -1,
       playerTime: 0,
       minimize: true,
@@ -570,7 +613,9 @@ export default {
     lyricToShow() {
       return this.lyricType === 'translation'
         ? this.lyricWithTranslation
-        : this.lyricWithRomaPronunciation;
+        : this.lyricType === 'romaPronunciation'
+        ? this.lyricWithRomaPronunciation
+        : this.lyricWithBoth;
     },
     yrcToShow() {
       return this.yrc;
@@ -635,6 +680,48 @@ export default {
           contents: [content],
         }));
       }
+      console.log(ret);
+      return ret;
+    },
+    lyricWithBoth() {
+      let ret = [];
+      // 空内容的去除
+      const lyricFiltered = this.lyric.filter(({ content }) =>
+        Boolean(content)
+      );
+      // content统一转换数组形式
+      if (lyricFiltered.length) {
+        lyricFiltered.forEach(l => {
+          const { rawTime, time, content } = l;
+          const lyricItem = { time, content, contents: [content] };
+          const sameTimeTLyric = this.tlyric.find(
+            ({ rawTime: tLyricRawTime }) => tLyricRawTime === rawTime
+          );
+          const sameTimeRomaLyric = this.romalyric.find(
+            ({ rawTime: tLyricRawTime }) => tLyricRawTime === rawTime
+          );
+          if (sameTimeTLyric) {
+            const { content: tLyricContent } = sameTimeTLyric;
+            if (content) {
+              lyricItem.contents.push(tLyricContent);
+            }
+          }
+          if (sameTimeRomaLyric) {
+            const { content: romaLyricContent } = sameTimeRomaLyric;
+            if (content) {
+              lyricItem.contents.push(romaLyricContent);
+            }
+          }
+          ret.push(lyricItem);
+        });
+      } else {
+        ret = lyricFiltered.map(({ time, content }) => ({
+          time,
+          content,
+          contents: [content],
+        }));
+      }
+      console.log(ret);
       return ret;
     },
     lyricFontSize() {
@@ -879,8 +966,14 @@ export default {
       });
     },
     switchLyricType() {
-      this.lyricType =
-        this.lyricType === 'translation' ? 'romaPronunciation' : 'translation';
+      const nxt = {
+        translation: 'romaPronunciation',
+        romaPronunciation: 'both',
+        both: 'translation',
+      };
+      this.lyricType = nxt[this.lyricType];
+      // 滚动歌词到当前播放位置
+      // this.scrollToCurrentLyric();
     },
     formatTrackTime(value) {
       return formatTrackTime(value);
