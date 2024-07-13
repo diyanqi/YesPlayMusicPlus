@@ -36,7 +36,7 @@
             <option value="en">🇬🇧 English</option>
             <option value="tr">🇹🇷 Türkçe</option>
             <option value="zh-CN">🇨🇳 简体中文</option>
-            <option value="zh-TW">繁體中文</option>
+            <option value="zh-TW">🇨🇳 繁體中文</option>
           </select>
         </div>
       </div>
@@ -181,6 +181,38 @@
       <h3>{{ $t('settings.lyric') }}</h3>
       <div class="item">
         <div class="left">
+          <div class="title"> {{ $t('settings.enableDynamicLyrics') }} </div>
+        </div>
+        <div class="right">
+          <div class="toggle">
+            <input
+              id="enable-dynamic-lyrics"
+              v-model="enableDynamicLyrics"
+              type="checkbox"
+              name="enable-dynamic-lyrics"
+            />
+            <label for="enable-dynamic-lyrics"></label>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="left">
+          <div class="title"> {{ $t('settings.fullscreenLyrics') }} </div>
+        </div>
+        <div class="right">
+          <div class="toggle">
+            <input
+              id="fullscreen-lyrics"
+              v-model="fullscreenLyrics"
+              type="checkbox"
+              name="fullscreen-lyrics"
+            />
+            <label for="fullscreen-lyrics"></label>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="left">
           <div class="title">{{ $t('settings.showLyricsTranslation') }}</div>
         </div>
         <div class="right">
@@ -236,9 +268,9 @@
         </div>
         <div class="right">
           <select v-model="lyricFontSize">
-            <!-- <option value="16">
-              {{ $t('settings.lyricFontSize.small') }} - 16px
-            </option> -->
+            <option value="32">
+              {{ $t('settings.lyricFontSize.small') }} - 32px
+            </option>
             <option value="36">
               {{ $t('settings.lyricFontSize.medium') }} - 36px
             </option>
@@ -251,7 +283,7 @@
           </select>
         </div>
       </div>
-      <div v-if="isElectron && isLinux" class="item">
+      <div v-if="isElectron && (isLinux || isMac)" class="item">
         <div class="left">
           <div class="title">
             {{ $t('settings.unm.enable') }}
@@ -987,6 +1019,28 @@ export default {
       set(value) {
         this.$store.commit('updateSettings', {
           key: 'lyricsBackground',
+          value,
+        });
+      },
+    },
+    enableDynamicLyrics: {
+      get() {
+        return this.settings.enableDynamicLyrics;
+      },
+      set(value) {
+        this.$store.commit('updateSettings', {
+          key: 'enableDynamicLyrics',
+          value,
+        });
+      },
+    },
+    fullscreenLyrics: {
+      get() {
+        return this.settings.fullscreenLyrics;
+      },
+      set(value) {
+        this.$store.commit('updateSettings', {
+          key: 'fullscreenLyrics',
           value,
         });
       },

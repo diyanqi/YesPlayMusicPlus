@@ -30,7 +30,7 @@
         :style="{ background }"
       ></div>
 
-      <div class="left-side">
+      <div v-if="!$store.state.settings.fullscreenLyrics" class="left-side">
         <div>
           <div v-if="settings.showLyricsTime" class="date">
             {{ date }}
@@ -247,7 +247,18 @@
             v-show="!noLyric"
             ref="lyricsContainer"
             class="lyrics-container"
-            :style="lyricFontSize"
+            :style="{
+              fontSize: lyricFontSize.fontSize,
+              'max-width': $store.state.settings.fullscreenLyrics
+                ? '100%'
+                : '460px',
+              'text-align': $store.state.settings.fullscreenLyrics
+                ? 'center'
+                : 'left',
+              'pointer-events': $store.state.settings.fullscreenLyrics
+                ? 'none'
+                : 'auto',
+            }"
           >
             <div id="line-1" class="line"></div>
             <div
@@ -267,6 +278,9 @@
                   line.content === '● ● ●' && playerTime >= lyricToShow[1].time
                     ? 'none'
                     : 'block',
+                'text-align': $store.state.settings.fullscreenLyrics
+                  ? 'center'
+                  : 'left',
               }"
               :class="{
                 highlight: highlightLyricIndex === index,
@@ -290,10 +304,18 @@
                       ? 3 * 2
                       : Math.abs(index - highlightLyricIndex) * 2
                   }px`,
+                  opacity:
+                    $store.state.settings.fullscreenLyrics &&
+                    highlightLyricIndex !== index
+                      ? 0
+                      : 1,
                 }"
               >
                 <span
-                  v-if="yrcToShow[index]"
+                  v-if="
+                    yrcToShow[index] &&
+                    $store.state.settings.enableDynamicLyrics
+                  "
                   :class="{
                     bouncingFadeOut: playerTime >= yrcToShow[index].time - 0.7,
                   }"
@@ -393,7 +415,13 @@
                   >
                     <br />
                   </font>
-                  <transition name="bounce">
+                  <transition
+                    :name="
+                      $store.state.settings.fullscreenLyrics
+                        ? 'emerge'
+                        : 'bounce'
+                    "
+                  >
                     <font
                       v-if="
                         yrcToShow[index].indexOf('（') != -1 &&
@@ -1040,7 +1068,11 @@ export default {
                 var scrollOffset =
                   elRect.top -
                   parentRect.top -
-                  (parentRect.height - elRect.height) * (1 - 0.618);
+                  (parentRect.height - elRect.height) *
+                    (1 -
+                      (!this.$store.state.settings.fullscreenLyrics
+                        ? 0.73
+                        : 0.55));
                 var low = 0;
                 var high = this.lyric.length - 1;
                 while (low <= high) {
@@ -1120,13 +1152,28 @@ export default {
                         (i - firstVisibleLine - 1)
                     }ms`;
                     try {
-                      el.children[0].style.transform = 'scale(0.95)';
-                      el.children[0].style.transition = `transform ${
-                        scrollDuration / 2
-                      }ms`;
-                      setTimeout(() => {
-                        el.children[0].style.transform = 'scale(1)';
-                      }, scrollDuration / 2);
+                      if (!this.$store.state.settings.fullscreenLyrics) {
+                        el.children[0].style.transform = 'scale(0.95)';
+                        el.children[0].style.transition = `transform ${
+                          scrollDuration / 2
+                        }ms`;
+                        setTimeout(() => {
+                          el.children[0].style.transform = 'scale(1)';
+                        }, scrollDuration / 2);
+                      } else {
+                        // 实现淡入淡出效果
+                        if (this.highlightLyricIndex === i) {
+                          // 这是即将要进入的歌词，要淡入
+                          el.children[0].style.transition = `opacity ${
+                            scrollDuration * 2
+                          }ms ease-in-out`;
+                          el.children[0].style.opacity = 1;
+                        } else {
+                          // 这是其他歌词，要隐藏
+                          el.children[0].style.transition = `opacity ${scrollDuration}ms`;
+                          el.children[0].style.opacity = 0;
+                        }
+                      }
                       // eslint-disable-next-line no-empty
                     } catch (e) {}
                   }
@@ -1241,6 +1288,25 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@keyframes emerge {
+  0% {
+    // transform: scale(0.98);
+    opacity: 0.5;
+  }
+  100% {
+    // transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.emerge-enter-active {
+  animation: emerge 0.3s;
+}
+
+.emerge-leave-active {
+  animation: emerge 0.3s reverse;
+}
+
 /* 弹跳动画 */
 @keyframes bounceIn {
   0% {

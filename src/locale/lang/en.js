@@ -181,6 +181,8 @@ export default {
     enableReversedMode: 'Enable Reversed Mode (Experimental)',
     enableCustomTitlebar: 'Enable custom title bar (Need restart)',
     showLyricsTime: 'Display current time',
+    enableDynamicLyrics: 'Enable dynamic lyrics',
+    fullscreenLyrics: 'Fullscreen lyrics',
     lyricsBackground: {
       text: 'Show Lyrics Background',
       off: 'Off',
