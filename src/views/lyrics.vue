@@ -1165,7 +1165,7 @@ export default {
                         if (this.highlightLyricIndex === i) {
                           // 这是即将要进入的歌词，要淡入
                           el.children[0].style.transition = `opacity ${
-                            scrollDuration * 2
+                            scrollDuration * 1.5
                           }ms ease-in-out`;
                           el.children[0].style.opacity = 1;
                         } else {
